@@ -380,7 +380,7 @@ public class OpenshiftWebPage implements IWebPage {
         return secretData;
     }
 
-    public ConsoleWebPage clickOnDashboard(AddressSpace addressSpace) throws Exception {
+    public AddressSpaceConsoleWebPage clickOnDashboard(AddressSpace addressSpace) throws Exception {
         openOpenshiftPage();
         clickOnShowAllProjects();
         selenium.clickOnItem(getProjectListItem(addressSpace.getMetadata().getNamespace()), addressSpace.getMetadata().getNamespace());
@@ -390,7 +390,7 @@ public class OpenshiftWebPage implements IWebPage {
         selenium.clickOnItem(serviceItem.getRedirectConsoleButton());
         Set<String> tabHandles = selenium.getDriver().getWindowHandles();
         selenium.getDriver().switchTo().window(tabHandles.toArray()[tabHandles.size() - 1].toString());
-        return new ConsoleWebPage(selenium, addressSpace);
+        return new AddressSpaceConsoleWebPage(selenium, addressSpace);
     }
 
     @Override

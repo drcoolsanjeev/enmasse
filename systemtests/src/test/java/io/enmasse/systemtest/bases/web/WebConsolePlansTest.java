@@ -21,7 +21,7 @@ import io.enmasse.systemtest.bases.isolated.ITestIsolatedStandard;
 import io.enmasse.systemtest.model.address.AddressType;
 import io.enmasse.systemtest.model.addressspace.AddressSpaceType;
 import io.enmasse.systemtest.selenium.SeleniumProvider;
-import io.enmasse.systemtest.selenium.page.ConsoleWebPage;
+import io.enmasse.systemtest.selenium.page.AddressSpaceConsoleWebPage;
 import io.enmasse.systemtest.shared.standard.QueueTest;
 import io.enmasse.systemtest.shared.standard.TopicTest;
 import io.enmasse.systemtest.utils.AddressSpaceUtils;
@@ -36,7 +36,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public abstract class WebConsolePlansTest extends TestBase implements ITestIsolatedStandard {
     SeleniumProvider selenium = SeleniumProvider.getInstance();
-    private ConsoleWebPage consoleWebPage;
+    private AddressSpaceConsoleWebPage addressSpaceConsoleWebPage;
 
     @AfterEach
     public void tearDownDrivers() throws Exception {
@@ -97,8 +97,8 @@ public abstract class WebConsolePlansTest extends TestBase implements ITestIsola
         isolatedResourcesManager.createOrUpdateUser(consoleAddrSpace, user);
 
         //create addresses
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(consoleAddrSpace), consoleAddrSpace, clusterUser);
-        consoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(consoleAddrSpace), consoleAddrSpace, clusterUser);
+        addressSpaceConsoleWebPage.openWebConsolePage();
         Address q1 = new AddressBuilder()
                 .withNewMetadata()
                 .withNamespace(consoleAddrSpace.getMetadata().getNamespace())
@@ -132,12 +132,12 @@ public abstract class WebConsolePlansTest extends TestBase implements ITestIsola
                 .withPlan(consoleQueuePlan3.getMetadata().getName())
                 .endSpec()
                 .build();
-        consoleWebPage.createAddressesWebConsole(q1, t2, q3);
+        addressSpaceConsoleWebPage.createAddressesWebConsole(q1, t2, q3);
 
         String assertMessage = "Address plan wasn't set properly";
-        assertEquals(q1.getSpec().getPlan(), consoleWebPage.getAddressItem(q1).getPlan(), assertMessage);
-        assertEquals(t2.getSpec().getPlan(), consoleWebPage.getAddressItem(t2).getPlan(), assertMessage);
-        assertEquals(q3.getSpec().getPlan(), consoleWebPage.getAddressItem(q3).getPlan(), assertMessage);
+        assertEquals(q1.getSpec().getPlan(), addressSpaceConsoleWebPage.getAddressItem(q1).getPlan(), assertMessage);
+        assertEquals(t2.getSpec().getPlan(), addressSpaceConsoleWebPage.getAddressItem(t2).getPlan(), assertMessage);
+        assertEquals(q3.getSpec().getPlan(), addressSpaceConsoleWebPage.getAddressItem(q3).getPlan(), assertMessage);
 
         //simple send/receive
         resourcesManager.setAmqpClientFactory(new AmqpClientFactory(consoleAddrSpace, user));
@@ -151,6 +151,6 @@ public abstract class WebConsolePlansTest extends TestBase implements ITestIsola
         TopicTest.runTopicTest(topicClient, t2, 333);
         QueueTest.runQueueTest(queueClient, q3, 333);
 
-        consoleWebPage.deleteAddressWebConsole(t2); //remaining addresses will be removed automatically via tearDown
+        addressSpaceConsoleWebPage.deleteAddressWebConsole(t2); //remaining addresses will be removed automatically via tearDown
     }
 }

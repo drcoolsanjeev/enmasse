@@ -19,8 +19,8 @@ import io.enmasse.systemtest.manager.IsolatedResourcesManager;
 import io.enmasse.systemtest.model.addressspace.AddressSpacePlans;
 import io.enmasse.systemtest.model.addressspace.AddressSpaceType;
 import io.enmasse.systemtest.selenium.SeleniumProvider;
+import io.enmasse.systemtest.selenium.page.AddressSpaceConsoleWebPage;
 import io.enmasse.systemtest.selenium.page.ConsoleWebPage;
-import io.enmasse.systemtest.selenium.page.GlobalConsolePage;
 import io.enmasse.systemtest.utils.AddressSpaceUtils;
 import io.enmasse.systemtest.utils.AuthServiceUtils;
 import io.enmasse.systemtest.utils.TestUtils;
@@ -35,21 +35,21 @@ public abstract class GlobalConsoleTest extends TestBase {
     private static final IsolatedResourcesManager ISOLATED_RESOURCES_MANAGER = IsolatedResourcesManager.getInstance();
     private static Logger log = CustomLogger.getLogger();
     SeleniumProvider selenium = SeleniumProvider.getInstance();
-    private GlobalConsolePage globalConsolePage;
+    private ConsoleWebPage globalConsolePage;
 
     //============================================================================================
     //============================ do test methods ===============================================
     //============================================================================================
 
     protected void doTestOpen() throws Exception {
-        globalConsolePage = new GlobalConsolePage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
+        globalConsolePage = new ConsoleWebPage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
         globalConsolePage.openGlobalConsolePage();
         globalConsolePage.logout();
     }
 
     protected void doTestCreateAddressSpace(AddressSpace addressSpace) throws Exception {
         ISOLATED_RESOURCES_MANAGER.addToAddressSpaces(addressSpace);
-        globalConsolePage = new GlobalConsolePage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
+        globalConsolePage = new ConsoleWebPage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
         globalConsolePage.openGlobalConsolePage();
         globalConsolePage.createAddressSpace(addressSpace);
         waitUntilAddressSpaceActive(addressSpace);
@@ -58,10 +58,10 @@ public abstract class GlobalConsoleTest extends TestBase {
 
     protected void doTestConnectToAddressSpaceConsole(AddressSpace addressSpace) throws Exception {
         ISOLATED_RESOURCES_MANAGER.addToAddressSpaces(addressSpace);
-        globalConsolePage = new GlobalConsolePage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
+        globalConsolePage = new ConsoleWebPage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
         globalConsolePage.openGlobalConsolePage();
         globalConsolePage.createAddressSpace(addressSpace);
-        ConsoleWebPage console = globalConsolePage.openAddressSpaceConsolePage(addressSpace);
+        AddressSpaceConsoleWebPage console = globalConsolePage.openAddressSpaceConsolePage(addressSpace);
         console.logout();
         waitUntilAddressSpaceActive(addressSpace);
     }
@@ -85,7 +85,7 @@ public abstract class GlobalConsoleTest extends TestBase {
                 .build();
         ISOLATED_RESOURCES_MANAGER.addToAddressSpaces(addressSpace);
 
-        globalConsolePage = new GlobalConsolePage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
+        globalConsolePage = new ConsoleWebPage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
         globalConsolePage.openGlobalConsolePage();
         globalConsolePage.createAddressSpace(addressSpace);
         waitUntilAddressSpaceActive(addressSpace);
@@ -108,7 +108,7 @@ public abstract class GlobalConsoleTest extends TestBase {
 
         ISOLATED_RESOURCES_MANAGER.createAddressSpace(addressSpace);
 
-        globalConsolePage = new GlobalConsolePage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
+        globalConsolePage = new ConsoleWebPage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
         globalConsolePage.openGlobalConsolePage();
         waitUntilAddressSpaceActive(addressSpace);
         globalConsolePage.deleteAddressSpace(addressSpace);
@@ -135,7 +135,7 @@ public abstract class GlobalConsoleTest extends TestBase {
                     .endSpec()
                     .build();
 
-            globalConsolePage = new GlobalConsolePage(selenium, TestUtils.getGlobalConsoleRoute(), user);
+            globalConsolePage = new ConsoleWebPage(selenium, TestUtils.getGlobalConsoleRoute(), user);
             globalConsolePage.openGlobalConsolePage();
             globalConsolePage.createAddressSpace(addressSpace);
             waitUntilAddressSpaceActive(addressSpace);
@@ -163,7 +163,7 @@ public abstract class GlobalConsoleTest extends TestBase {
                 .endSpec()
                 .build();
         ISOLATED_RESOURCES_MANAGER.addToAddressSpaces(addressSpace);
-        globalConsolePage = new GlobalConsolePage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
+        globalConsolePage = new ConsoleWebPage(selenium, TestUtils.getGlobalConsoleRoute(), clusterUser);
         globalConsolePage.openGlobalConsolePage();
         globalConsolePage.createAddressSpace(addressSpace);
         waitUntilAddressSpaceActive(addressSpace);
@@ -223,7 +223,7 @@ public abstract class GlobalConsoleTest extends TestBase {
         //try to get all external endpoints
         kubernetes.getExternalEndpoint(endpointPrefix + "console-" + AddressSpaceUtils.getAddressSpaceInfraUuid(addressSpace));
 
-        ConsoleWebPage console = new ConsoleWebPage(
+        AddressSpaceConsoleWebPage console = new AddressSpaceConsoleWebPage(
                 selenium,
                 AddressSpaceUtils.getConsoleRoute(addressSpace),
                 addressSpace,

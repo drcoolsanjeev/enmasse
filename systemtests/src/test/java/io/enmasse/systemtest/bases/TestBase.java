@@ -23,7 +23,7 @@ import io.enmasse.systemtest.mqtt.MqttUtils;
 import io.enmasse.systemtest.platform.KubeCMDClient;
 import io.enmasse.systemtest.selenium.SeleniumManagement;
 import io.enmasse.systemtest.selenium.SeleniumProvider;
-import io.enmasse.systemtest.selenium.page.ConsoleWebPage;
+import io.enmasse.systemtest.selenium.page.AddressSpaceConsoleWebPage;
 import io.enmasse.systemtest.time.TimeoutBudget;
 import io.enmasse.systemtest.utils.AddressSpaceUtils;
 import io.enmasse.systemtest.utils.AddressUtils;
@@ -115,7 +115,7 @@ public abstract class TestBase implements ITestBase, ITestSeparator {
             SeleniumManagement.deployFirefoxApp();
             selenium = SeleniumProvider.getInstance();
             selenium.setupDriver(TestUtils.getFirefoxDriver());
-            ConsoleWebPage console = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(addressSpace), addressSpace, clusterUser);
+            AddressSpaceConsoleWebPage console = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(addressSpace), addressSpace, clusterUser);
             console.openWebConsolePage();
             console.openAddressesPageWebConsole();
 

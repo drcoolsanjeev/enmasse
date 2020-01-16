@@ -23,7 +23,7 @@ import io.enmasse.systemtest.model.addressspace.AddressSpacePlans;
 import io.enmasse.systemtest.model.addressspace.AddressSpaceType;
 import io.enmasse.systemtest.selenium.SeleniumFirefox;
 import io.enmasse.systemtest.selenium.SeleniumProvider;
-import io.enmasse.systemtest.selenium.page.ConsoleWebPage;
+import io.enmasse.systemtest.selenium.page.AddressSpaceConsoleWebPage;
 import io.enmasse.systemtest.selenium.page.OpenshiftWebPage;
 import io.enmasse.systemtest.selenium.resources.BindingSecretData;
 import io.enmasse.systemtest.utils.AddressUtils;
@@ -193,7 +193,7 @@ class ServiceCatalogWebTest extends TestBase implements ITestIsolatedStandard {
         BindingSecretData credentials = ocPage.viewSecretOfBinding(brokered, bindingID);
         BindingSecretData restricted = ocPage.viewSecretOfBinding(brokered, restrictedAccesId);
 
-        ConsoleWebPage consolePage = ocPage.clickOnDashboard(brokered);
+        AddressSpaceConsoleWebPage consolePage = ocPage.clickOnDashboard(brokered);
         consolePage.login(ocTestUser);
         consolePage.createAddressWebConsole(queue, false);
         consolePage.createAddressWebConsole(topic, true);
@@ -250,7 +250,7 @@ class ServiceCatalogWebTest extends TestBase implements ITestIsolatedStandard {
         String bindingID = ocPage.createBinding(addressSpace, null, null);
         BindingSecretData credentials = ocPage.viewSecretOfBinding(addressSpace, bindingID);
 
-        ConsoleWebPage consolePage = ocPage.clickOnDashboard(addressSpace);
+        AddressSpaceConsoleWebPage consolePage = ocPage.clickOnDashboard(addressSpace);
         consolePage.login(ocTestUser);
         consolePage.createAddressWebConsole(queue, true);
 
@@ -286,7 +286,7 @@ class ServiceCatalogWebTest extends TestBase implements ITestIsolatedStandard {
         brokeredSpace = kubernetes.getAddressSpaceClient(brokeredSpace.getMetadata().getNamespace()).withName(brokeredSpace.getMetadata().getName()).get();
 
         //open console login web page and use OpenShift credentials for login
-        ConsoleWebPage consolePage = ocPage.clickOnDashboard(brokeredSpace);
+        AddressSpaceConsoleWebPage consolePage = ocPage.clickOnDashboard(brokeredSpace);
         consolePage.login(ocTestUser);
     }
 
@@ -327,7 +327,7 @@ class ServiceCatalogWebTest extends TestBase implements ITestIsolatedStandard {
         String bindingID = ocPage.createBinding(addressSpace, null, null);
         BindingSecretData credentials = ocPage.viewSecretOfBinding(addressSpace, bindingID);
 
-        ConsoleWebPage consolePage = ocPage.clickOnDashboard(addressSpace);
+        AddressSpaceConsoleWebPage consolePage = ocPage.clickOnDashboard(addressSpace);
         consolePage.login(ocTestUser);
         consolePage.createAddressWebConsole(queue, true);
 
@@ -368,7 +368,7 @@ class ServiceCatalogWebTest extends TestBase implements ITestIsolatedStandard {
         ocPage.provisionAddressSpaceViaSC(addressSpace);
         addressSpace = kubernetes.getAddressSpaceClient(addressSpace.getMetadata().getNamespace()).withName(addressSpace.getMetadata().getName()).get();
 
-        ConsoleWebPage consolePage = ocPage.clickOnDashboard(addressSpace);
+        AddressSpaceConsoleWebPage consolePage = ocPage.clickOnDashboard(addressSpace);
         consolePage.login(ocTestUser);
         consolePage.createAddressWebConsole(new AddressBuilder()
                 .withNewMetadata()

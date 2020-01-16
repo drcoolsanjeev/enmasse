@@ -12,7 +12,6 @@ import io.enmasse.systemtest.UserCredentials;
 import io.enmasse.systemtest.amqp.AmqpClient;
 import io.enmasse.systemtest.bases.TestBase;
 import io.enmasse.systemtest.bases.shared.ITestBaseShared;
-import io.enmasse.systemtest.clients.ClientUtils;
 import io.enmasse.systemtest.logs.CustomLogger;
 import io.enmasse.systemtest.messagingclients.ExternalMessagingClient;
 import io.enmasse.systemtest.messagingclients.rhea.RheaClientConnector;
@@ -21,7 +20,7 @@ import io.enmasse.systemtest.model.address.AddressType;
 import io.enmasse.systemtest.model.addressplan.DestinationPlan;
 import io.enmasse.systemtest.platform.Kubernetes;
 import io.enmasse.systemtest.selenium.SeleniumProvider;
-import io.enmasse.systemtest.selenium.page.ConsoleWebPage;
+import io.enmasse.systemtest.selenium.page.AddressSpaceConsoleWebPage;
 import io.enmasse.systemtest.selenium.resources.AddressWebItem;
 import io.enmasse.systemtest.selenium.resources.ConnectionWebItem;
 import io.enmasse.systemtest.selenium.resources.FilterType;
@@ -65,7 +64,7 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
     private List<ExternalMessagingClient> clientsList;
 
 
-    private ConsoleWebPage consoleWebPage;
+    private AddressSpaceConsoleWebPage addressSpaceConsoleWebPage;
 
     @AfterEach
     public void tearDownWebConsoleTests() {
@@ -82,26 +81,26 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
     protected void doTestCreateDeleteAddress(Address... destinations) throws Exception {
         Kubernetes.getInstance().getAddressClient().inNamespace(getSharedAddressSpace().getMetadata().
                 getNamespace()).list().getItems().forEach(address -> log.warn("Add from list: " + address));
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openWebConsolePage();
         for (Address dest : destinations) {
-            consoleWebPage.createAddressWebConsole(dest, true);
-            consoleWebPage.deleteAddressWebConsole(dest);
+            addressSpaceConsoleWebPage.createAddressWebConsole(dest, true);
+            addressSpaceConsoleWebPage.deleteAddressWebConsole(dest);
         }
-        assertWaitForValue(0, () -> consoleWebPage.getResultsCount(), new TimeoutBudget(20, TimeUnit.SECONDS));
+        assertWaitForValue(0, () -> addressSpaceConsoleWebPage.getResultsCount(), new TimeoutBudget(20, TimeUnit.SECONDS));
     }
 
     protected void doTestCreateDeleteDurableSubscription(Address... destinations) throws Exception {
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.openAddressesPageWebConsole();
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openAddressesPageWebConsole();
 
 
         for (Address dest : destinations) {
             //create topic
-            consoleWebPage.createAddressWebConsole(dest);
+            addressSpaceConsoleWebPage.createAddressWebConsole(dest);
             AddressUtils.waitForDestinationsReady(new TimeoutBudget(5, TimeUnit.MINUTES), dest);
             log.info("Address topic: " + dest);
             //create subscription
@@ -117,34 +116,34 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                     .withPlan(DestinationPlan.STANDARD_LARGE_SUBSCRIPTION)
                     .endSpec()
                     .build();
-            consoleWebPage.createAddressWebConsole(subscription);
+            addressSpaceConsoleWebPage.createAddressWebConsole(subscription);
             AddressUtils.waitForDestinationsReady(new TimeoutBudget(5, TimeUnit.MINUTES), subscription);
             log.info("Subscription add: " + subscription);
 
             Kubernetes.getInstance().getAddressClient().inNamespace(getSharedAddressSpace().getMetadata().
                     getNamespace()).list().getItems().forEach(address -> log.warn("Add from list: " + address));
 
-            assertWaitForValue(2, () -> consoleWebPage.getResultsCount(), new TimeoutBudget(120, TimeUnit.SECONDS));
+            assertWaitForValue(2, () -> addressSpaceConsoleWebPage.getResultsCount(), new TimeoutBudget(120, TimeUnit.SECONDS));
 
             //delete topic and sub
-            consoleWebPage.deleteAddressWebConsole(subscription);
-            consoleWebPage.deleteAddressWebConsole(dest);
+            addressSpaceConsoleWebPage.deleteAddressWebConsole(subscription);
+            addressSpaceConsoleWebPage.deleteAddressWebConsole(dest);
         }
-        assertWaitForValue(0, () -> consoleWebPage.getResultsCount(), new TimeoutBudget(20, TimeUnit.SECONDS));
+        assertWaitForValue(0, () -> addressSpaceConsoleWebPage.getResultsCount(), new TimeoutBudget(20, TimeUnit.SECONDS));
     }
 
     protected void doTestAddressStatus(Address destination) throws Exception {
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressWebConsole(destination, false);
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressWebConsole(destination, false);
         assertThat("Console failed, expected PENDING or READY state",
-                consoleWebPage.getAddressItem(destination).getStatus(),
+                addressSpaceConsoleWebPage.getAddressItem(destination).getStatus(),
                 either(is(AddressStatus.PENDING)).or(is(AddressStatus.READY)));
 
         AddressUtils.waitForDestinationsReady(new TimeoutBudget(5, TimeUnit.MINUTES), destination);
 
-        assertEquals(AddressStatus.READY, consoleWebPage.getAddressItem(destination).getStatus(),
+        assertEquals(AddressStatus.READY, addressSpaceConsoleWebPage.getAddressItem(destination).getStatus(),
                 "Console failed, expected READY state");
     }
 
@@ -152,75 +151,75 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
         int addressCount = 4;
         ArrayList<Address> addresses = generateQueueTopicList(getSharedAddressSpace(), "via-web", IntStream.range(0, addressCount));
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
         assertThat(String.format("Console failed, does not contain %d addresses", addressCount),
-                consoleWebPage.getAddressItems().size(), is(addressCount));
+                addressSpaceConsoleWebPage.getAddressItems().size(), is(addressCount));
 
-        consoleWebPage.addAddressesFilter(FilterType.TYPE, AddressType.QUEUE.toString());
-        List<AddressWebItem> items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.TYPE, AddressType.QUEUE.toString());
+        List<AddressWebItem> items = addressSpaceConsoleWebPage.getAddressItems();
         assertThat(String.format("Console failed, does not contain %d addresses", addressCount / 2),
                 items.size(), is(addressCount / 2)); //assert correct count
         assertAddressType("Console failed, does not contains only address type queue",
                 items, AddressType.QUEUE); //assert correct type
 
-        consoleWebPage.removeFilterByType(AddressType.QUEUE.toString());
+        addressSpaceConsoleWebPage.removeFilterByType(AddressType.QUEUE.toString());
         assertThat(String.format("Console failed, does not contain %d addresses", addressCount),
-                consoleWebPage.getAddressItems().size(), is(addressCount));
+                addressSpaceConsoleWebPage.getAddressItems().size(), is(addressCount));
 
-        consoleWebPage.addAddressesFilter(FilterType.TYPE, AddressType.TOPIC.toString());
-        items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.TYPE, AddressType.TOPIC.toString());
+        items = addressSpaceConsoleWebPage.getAddressItems();
         assertThat(String.format("Console failed, does not contain %d addresses", addressCount / 2),
                 items.size(), is(addressCount / 2)); //assert correct count
         assertAddressType("Console failed, does not contains only address type topic",
                 items, AddressType.TOPIC); //assert correct type
 
-        consoleWebPage.removeFilterByType(AddressType.TOPIC.toString());
+        addressSpaceConsoleWebPage.removeFilterByType(AddressType.TOPIC.toString());
         assertThat(String.format("Console failed, does not contain %d addresses", addressCount),
-                consoleWebPage.getAddressItems().size(), is(addressCount));
+                addressSpaceConsoleWebPage.getAddressItems().size(), is(addressCount));
     }
 
     protected void doTestFilterAddressesByName() throws Exception {
         int addressCount = 4;
         ArrayList<Address> addresses = generateQueueTopicList(getSharedAddressSpace(), "via-web", IntStream.range(0, addressCount));
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
 
         String subText = "web";
-        consoleWebPage.addAddressesFilter(FilterType.NAME, subText);
-        List<AddressWebItem> items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.NAME, subText);
+        List<AddressWebItem> items = addressSpaceConsoleWebPage.getAddressItems();
         assertEquals(addressCount, items.size(),
                 String.format("Console failed, does not contain %d addresses", addressCount));
         assertAddressName("Console failed, does not contain addresses contain " + subText, items, subText);
 
         subText = "via";
-        consoleWebPage.addAddressesFilter(FilterType.NAME, subText);
-        items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.NAME, subText);
+        items = addressSpaceConsoleWebPage.getAddressItems();
         assertEquals(addressCount, items.size(),
                 String.format("Console failed, does not contain %d addresses", addressCount));
         assertAddressName("Console failed, does not contain addresses contain " + subText, items, subText);
 
         subText = "web";
-        consoleWebPage.removeFilterByName(subText);
-        items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.removeFilterByName(subText);
+        items = addressSpaceConsoleWebPage.getAddressItems();
         assertEquals(addressCount, items.size(),
                 String.format("Console failed, does not contain %d addresses", addressCount));
         assertAddressName("Console failed, does not contain addresses contain " + subText, items, subText);
 
         subText = "queue";
-        consoleWebPage.addAddressesFilter(FilterType.NAME, subText);
-        items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.NAME, subText);
+        items = addressSpaceConsoleWebPage.getAddressItems();
         assertEquals(addressCount / 2, items.size(),
                 String.format("Console failed, does not contain %d addresses", addressCount / 2));
         assertAddressName("Console failed, does not contain addresses contain " + subText, items, subText);
 
-        consoleWebPage.clearAllFilters();
-        assertEquals(addressCount, consoleWebPage.getAddressItems().size(),
+        addressSpaceConsoleWebPage.clearAllFilters();
+        assertEquals(addressCount, addressSpaceConsoleWebPage.getAddressItems().size(),
                 String.format("Console failed, does not contain %d addresses", addressCount));
     }
 
@@ -253,27 +252,27 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                 .endSpec()
                 .build();
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressWebConsole(destQueue);
-        consoleWebPage.createAddressWebConsole(destTopic);
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressWebConsole(destQueue);
+        addressSpaceConsoleWebPage.createAddressWebConsole(destTopic);
 
-        consoleWebPage.addAddressesFilter(FilterType.NAME, "queue");
-        items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.NAME, "queue");
+        items = addressSpaceConsoleWebPage.getAddressItems();
 
         assertEquals(addressTotal / 2, items.size(),
                 String.format("Console failed, filter does not contain %d addresses", addressTotal / 2));
 
         assertAddressName("Console failed, filter does not contain addresses", items, "queue");
 
-        consoleWebPage.deleteAddressWebConsole(destQueue);
-        items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.deleteAddressWebConsole(destQueue);
+        items = addressSpaceConsoleWebPage.getAddressItems();
         assertEquals(0, items.size());
         log.info("filtered address has been deleted and no longer present in filter");
 
-        consoleWebPage.clearAllFilters();
-        items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.clearAllFilters();
+        items = addressSpaceConsoleWebPage.getAddressItems();
         assertEquals(addressTotal / 2, items.size());
     }
 
@@ -281,43 +280,43 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
         int addressCount = 4;
         ArrayList<Address> addresses = generateQueueTopicList(getSharedAddressSpace(), "via-web", IntStream.range(0, addressCount));
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
         assertThat(String.format("Console failed, does not contain %d addresses", addressCount),
-                consoleWebPage.getAddressItems().size(), is(addressCount));
+                addressSpaceConsoleWebPage.getAddressItems().size(), is(addressCount));
 
         //valid filter, will show 2 results
         String subText = "topic";
-        consoleWebPage.addAddressesFilter(FilterType.NAME, subText);
-        List<AddressWebItem> items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.NAME, subText);
+        List<AddressWebItem> items = addressSpaceConsoleWebPage.getAddressItems();
         assertEquals(addressCount / 2, items.size(),
                 String.format("Console failed, does not contain %d addresses", addressCount / 2));
         assertAddressName("Console failed, does not contain addresses contain " + subText, items, subText);
-        consoleWebPage.clearAllFilters();
+        addressSpaceConsoleWebPage.clearAllFilters();
 
         //invalid filter (not regex), error message is shown
         subText = "*";
-        consoleWebPage.addAddressesFilter(FilterType.NAME, subText);
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.NAME, subText);
         WebElement regexAlert = selenium.getWebElement(() -> selenium.getDriver().findElement(By.className("pficon-error-circle-o")));
         assertTrue(regexAlert.isDisplayed());
 
         //valid regex filter (.*), will show 4 results
         subText = ".*";
-        consoleWebPage.addAddressesFilter(FilterType.NAME, subText);
-        items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.NAME, subText);
+        items = addressSpaceConsoleWebPage.getAddressItems();
         assertEquals(addressCount, items.size(),
                 String.format("Console failed, does not contain %d addresses", addressCount));
-        consoleWebPage.clearAllFilters();
+        addressSpaceConsoleWebPage.clearAllFilters();
 
         //valid regex filter ([0-9]\d*$) = any address ending with a number, will show 4 results
         subText = "[0-9]\\d*$";
-        consoleWebPage.addAddressesFilter(FilterType.NAME, subText);
-        items = consoleWebPage.getAddressItems();
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.NAME, subText);
+        items = addressSpaceConsoleWebPage.getAddressItems();
         assertEquals(addressCount, items.size(),
                 String.format("Console failed, does not contain %d addresses", addressCount));
-        consoleWebPage.clearAllFilters();
+        addressSpaceConsoleWebPage.clearAllFilters();
     }
 
     protected void doTestRegexAlertBehavesConsistently() throws Exception {
@@ -325,26 +324,26 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
         int addressCount = 2;
         ArrayList<Address> addresses = generateQueueTopicList(getSharedAddressSpace(), "via-web", IntStream.range(0, addressCount));
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
 
         assertThat(String.format("Console failed, does not contain %d addresses", addressCount),
-                consoleWebPage.getAddressItems().size(), is(addressCount));
+                addressSpaceConsoleWebPage.getAddressItems().size(), is(addressCount));
 
-        consoleWebPage.addAddressesFilter(FilterType.NAME, subText);
-        WebElement regexAlert = consoleWebPage.getFilterRegexAlert();
+        addressSpaceConsoleWebPage.addAddressesFilter(FilterType.NAME, subText);
+        WebElement regexAlert = addressSpaceConsoleWebPage.getFilterRegexAlert();
         assertTrue(regexAlert.isDisplayed());
-        consoleWebPage.clickOnRegexAlertClose();
+        addressSpaceConsoleWebPage.clickOnRegexAlertClose();
         assertFalse(regexAlert.isDisplayed());
 
         //check on connections tab filter
-        consoleWebPage.openConnectionsPageWebConsole();
-        consoleWebPage.addConnectionsFilter(FilterType.HOSTNAME, subText);
-        regexAlert = consoleWebPage.getFilterRegexAlert();
+        addressSpaceConsoleWebPage.openConnectionsPageWebConsole();
+        addressSpaceConsoleWebPage.addConnectionsFilter(FilterType.HOSTNAME, subText);
+        regexAlert = addressSpaceConsoleWebPage.getFilterRegexAlert();
         assertTrue(regexAlert.isDisplayed());
-        consoleWebPage.clickOnRegexAlertClose();
+        addressSpaceConsoleWebPage.clickOnRegexAlertClose();
         assertFalse(regexAlert.isDisplayed());
     }
 
@@ -352,39 +351,39 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
         int addressCount = 4;
         ArrayList<Address> addresses = generateQueueTopicList(getSharedAddressSpace(), "via-web", IntStream.range(0, addressCount));
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
 
-        consoleWebPage.sortItems(SortType.NAME, true);
-        assertSorted("Console failed, items are not sorted by name asc", consoleWebPage.getAddressItems());
+        addressSpaceConsoleWebPage.sortItems(SortType.NAME, true);
+        assertSorted("Console failed, items are not sorted by name asc", addressSpaceConsoleWebPage.getAddressItems());
 
-        consoleWebPage.sortItems(SortType.NAME, false);
-        assertSorted("Console failed, items are not sorted by name desc", consoleWebPage.getAddressItems(), true);
+        addressSpaceConsoleWebPage.sortItems(SortType.NAME, false);
+        assertSorted("Console failed, items are not sorted by name desc", addressSpaceConsoleWebPage.getAddressItems(), true);
     }
 
     protected void doTestSortAddressesByClients() throws Exception {
         int addressCount = 4;
         ArrayList<Address> addresses = generateQueueTopicList(getSharedAddressSpace(), "via-web", IntStream.range(0, addressCount));
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
-        consoleWebPage.openAddressesPageWebConsole();
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
+        addressSpaceConsoleWebPage.openAddressesPageWebConsole();
 
         List<ExternalMessagingClient> receivers = getClientUtils().attachReceivers(getSharedAddressSpace(), addresses, -1, defaultCredentials);
         try {
             Thread.sleep(15000);
 
-            consoleWebPage.sortItems(SortType.RECEIVERS, true);
+            addressSpaceConsoleWebPage.sortItems(SortType.RECEIVERS, true);
             assertSorted("Console failed, items are not sorted by count of receivers asc",
-                    consoleWebPage.getAddressItems(), Comparator.comparingInt(AddressWebItem::getReceiversCount));
+                    addressSpaceConsoleWebPage.getAddressItems(), Comparator.comparingInt(AddressWebItem::getReceiversCount));
 
-            consoleWebPage.sortItems(SortType.RECEIVERS, false);
+            addressSpaceConsoleWebPage.sortItems(SortType.RECEIVERS, false);
             assertSorted("Console failed, items are not sorted by count of receivers desc",
-                    consoleWebPage.getAddressItems(), true, Comparator.comparingInt(AddressWebItem::getReceiversCount));
+                    addressSpaceConsoleWebPage.getAddressItems(), true, Comparator.comparingInt(AddressWebItem::getReceiversCount));
         } finally {
             getClientUtils().stopClients(receivers);
         }
@@ -393,13 +392,13 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
         try {
 
             Thread.sleep(15000);
-            consoleWebPage.sortItems(SortType.SENDERS, true);
+            addressSpaceConsoleWebPage.sortItems(SortType.SENDERS, true);
             assertSorted("Console failed, items are not sorted by count of senders asc",
-                    consoleWebPage.getAddressItems(), Comparator.comparingInt(AddressWebItem::getSendersCount));
+                    addressSpaceConsoleWebPage.getAddressItems(), Comparator.comparingInt(AddressWebItem::getSendersCount));
 
-            consoleWebPage.sortItems(SortType.SENDERS, false);
+            addressSpaceConsoleWebPage.sortItems(SortType.SENDERS, false);
             assertSorted("Console failed, items are not sorted by count of senders desc",
-                    consoleWebPage.getAddressItems(), true, Comparator.comparingInt(AddressWebItem::getSendersCount));
+                    addressSpaceConsoleWebPage.getAddressItems(), true, Comparator.comparingInt(AddressWebItem::getSendersCount));
         } finally {
             getClientUtils().stopClients(senders);
         }
@@ -410,25 +409,25 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
         int addressCount = 2;
         ArrayList<Address> addresses = generateQueueTopicList(getSharedAddressSpace(), "via-web", IntStream.range(0, addressCount));
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
-        consoleWebPage.openConnectionsPageWebConsole();
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
+        addressSpaceConsoleWebPage.openConnectionsPageWebConsole();
 
-        assertEquals(0, consoleWebPage.getConnectionItems().size(), "Unexpected number of connections present before attaching clients");
+        assertEquals(0, addressSpaceConsoleWebPage.getConnectionItems().size(), "Unexpected number of connections present before attaching clients");
 
         clientsList = attachClients(addresses);
 
         boolean pass = false;
         try {
-            consoleWebPage.sortItems(SortType.SENDERS, true);
+            addressSpaceConsoleWebPage.sortItems(SortType.SENDERS, true);
             assertSorted("Console failed, items are not sorted by count of senders asc",
-                    consoleWebPage.getConnectionItems(6), Comparator.comparingInt(ConnectionWebItem::getSendersCount));
+                    addressSpaceConsoleWebPage.getConnectionItems(6), Comparator.comparingInt(ConnectionWebItem::getSendersCount));
 
-            consoleWebPage.sortItems(SortType.SENDERS, false);
+            addressSpaceConsoleWebPage.sortItems(SortType.SENDERS, false);
             assertSorted("Console failed, items are not sorted by count of senders desc",
-                    consoleWebPage.getConnectionItems(6), true, Comparator.comparingInt(ConnectionWebItem::getSendersCount));
+                    addressSpaceConsoleWebPage.getConnectionItems(6), true, Comparator.comparingInt(ConnectionWebItem::getSendersCount));
             pass = true;
         } finally {
             if (!pass) {
@@ -448,28 +447,28 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
         int addressCount = 2;
         ArrayList<Address> addresses = generateQueueTopicList(getSharedAddressSpace(), "via-web", IntStream.range(0, addressCount));
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
-        consoleWebPage.openConnectionsPageWebConsole();
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
+        addressSpaceConsoleWebPage.openConnectionsPageWebConsole();
 
         clientsList = attachClients(addresses);
 
-        consoleWebPage.sortItems(SortType.RECEIVERS, true);
+        addressSpaceConsoleWebPage.sortItems(SortType.RECEIVERS, true);
         assertSorted("Console failed, items are not sorted by count of receivers asc",
-                consoleWebPage.getConnectionItems(6), Comparator.comparingInt(ConnectionWebItem::getReceiversCount));
+                addressSpaceConsoleWebPage.getConnectionItems(6), Comparator.comparingInt(ConnectionWebItem::getReceiversCount));
 
-        consoleWebPage.sortItems(SortType.RECEIVERS, false);
+        addressSpaceConsoleWebPage.sortItems(SortType.RECEIVERS, false);
         assertSorted("Console failed, items are not sorted by count of receivers desc",
-                consoleWebPage.getConnectionItems(6), true, Comparator.comparingInt(ConnectionWebItem::getReceiversCount));
+                addressSpaceConsoleWebPage.getConnectionItems(6), true, Comparator.comparingInt(ConnectionWebItem::getReceiversCount));
     }
 
 
     protected void doTestFilterConnectionsByEncrypted() throws Exception {
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openWebConsolePage();
         Address queue = new AddressBuilder()
                 .withNewMetadata()
                 .withNamespace(getSharedAddressSpace().getMetadata().getNamespace())
@@ -481,32 +480,32 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                 .withPlan(getDefaultPlan(AddressType.QUEUE))
                 .endSpec()
                 .build();
-        consoleWebPage.createAddressesWebConsole(queue);
-        consoleWebPage.openConnectionsPageWebConsole();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(queue);
+        addressSpaceConsoleWebPage.openConnectionsPageWebConsole();
 
         int receiverCount = 5;
         clientsList = getClientUtils().attachReceivers(getSharedAddressSpace(), queue, receiverCount, -1, defaultCredentials);
 
-        consoleWebPage.addConnectionsFilter(FilterType.ENCRYPTED, "encrypted");
-        List<ConnectionWebItem> items = consoleWebPage.getConnectionItems(receiverCount);
+        addressSpaceConsoleWebPage.addConnectionsFilter(FilterType.ENCRYPTED, "encrypted");
+        List<ConnectionWebItem> items = addressSpaceConsoleWebPage.getConnectionItems(receiverCount);
         assertThat(String.format("Console failed, does not contain %d connections", receiverCount),
                 items.size(), is(receiverCount));
         assertConnectionUnencrypted("Console failed, does not show only Encrypted connections", items);
 
-        consoleWebPage.clearAllFilters();
-        assertThat(consoleWebPage.getConnectionItems(receiverCount).size(), is(receiverCount));
+        addressSpaceConsoleWebPage.clearAllFilters();
+        assertThat(addressSpaceConsoleWebPage.getConnectionItems(receiverCount).size(), is(receiverCount));
 
-        consoleWebPage.addConnectionsFilter(FilterType.ENCRYPTED, "unencrypted");
-        items = consoleWebPage.getConnectionItems();
+        addressSpaceConsoleWebPage.addConnectionsFilter(FilterType.ENCRYPTED, "unencrypted");
+        items = addressSpaceConsoleWebPage.getConnectionItems();
         assertThat(String.format("Console failed, does not contain %d connections", 0),
                 items.size(), is(0));
         assertConnectionEncrypted("Console failed, does not show only Encrypted connections", items);
     }
 
     protected void doTestFilterConnectionsByUser() throws Exception {
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openWebConsolePage();
         Address queue = new AddressBuilder()
                 .withNewMetadata()
                 .withNamespace(getSharedAddressSpace().getMetadata().getNamespace())
@@ -518,8 +517,8 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                 .withPlan(getDefaultPlan(AddressType.QUEUE))
                 .endSpec()
                 .build();
-        consoleWebPage.createAddressesWebConsole(queue);
-        consoleWebPage.openConnectionsPageWebConsole();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(queue);
+        addressSpaceConsoleWebPage.openConnectionsPageWebConsole();
 
         UserCredentials pavel = new UserCredentials("pavel", "enmasse");
         resourcesManager.createOrUpdateUser(getSharedAddressSpace(), pavel);
@@ -531,31 +530,31 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
             receiversPavel = getClientUtils().attachReceivers(getSharedAddressSpace(), queue, receiversBatch1, -1, pavel);
             receiversTest = getClientUtils().attachReceivers(getSharedAddressSpace(), queue, receiversBatch2, -1, defaultCredentials);
             assertThat(String.format("Console failed, does not contain %d connections", receiversBatch1 + receiversBatch2),
-                    consoleWebPage.getConnectionItems(receiversBatch1 + receiversBatch2).size(), is(receiversBatch1 + receiversBatch2));
+                    addressSpaceConsoleWebPage.getConnectionItems(receiversBatch1 + receiversBatch2).size(), is(receiversBatch1 + receiversBatch2));
 
-            consoleWebPage.addConnectionsFilter(FilterType.USER, defaultCredentials.getUsername());
-            List<ConnectionWebItem> items = consoleWebPage.getConnectionItems(receiversBatch2);
+            addressSpaceConsoleWebPage.addConnectionsFilter(FilterType.USER, defaultCredentials.getUsername());
+            List<ConnectionWebItem> items = addressSpaceConsoleWebPage.getConnectionItems(receiversBatch2);
             assertThat(String.format("Console failed, does not contain %d connections", receiversBatch2),
                     items.size(), is(receiversBatch2));
             assertConnectionUsers(
                     String.format("Console failed, does not contain connections for user '%s'", defaultCredentials),
                     items, defaultCredentials.getUsername());
 
-            consoleWebPage.addConnectionsFilter(FilterType.USER, pavel.getUsername());
+            addressSpaceConsoleWebPage.addConnectionsFilter(FilterType.USER, pavel.getUsername());
             assertThat(String.format("Console failed, does not contain %d connections", 0),
-                    consoleWebPage.getConnectionItems().size(), is(0));
+                    addressSpaceConsoleWebPage.getConnectionItems().size(), is(0));
 
-            consoleWebPage.removeFilterByUser(defaultCredentials.getUsername());
-            items = consoleWebPage.getConnectionItems(receiversBatch1);
+            addressSpaceConsoleWebPage.removeFilterByUser(defaultCredentials.getUsername());
+            items = addressSpaceConsoleWebPage.getConnectionItems(receiversBatch1);
             assertThat(String.format("Console failed, does not contain %d connections", receiversBatch1),
                     items.size(), is(receiversBatch1));
             assertConnectionUsers(
                     String.format("Console failed, does not contain connections for user '%s'", pavel),
                     items, pavel.getUsername());
 
-            consoleWebPage.clearAllFilters();
+            addressSpaceConsoleWebPage.clearAllFilters();
             assertThat(String.format("Console failed, does not contain %d connections", receiversBatch1 + receiversBatch2),
-                    consoleWebPage.getConnectionItems(receiversBatch1 + receiversBatch2).size(), is(receiversBatch1 + receiversBatch2));
+                    addressSpaceConsoleWebPage.getConnectionItems(receiversBatch1 + receiversBatch2).size(), is(receiversBatch1 + receiversBatch2));
         } finally {
             resourcesManager.removeUser(getSharedAddressSpace(), pavel.getUsername());
             getClientUtils().stopClients(receiversTest);
@@ -567,52 +566,52 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
     protected void doTestFilterConnectionsByHostname() throws Exception {
         int addressCount = 2;
         ArrayList<Address> addresses = generateQueueTopicList(getSharedAddressSpace(), "via-web", IntStream.range(0, addressCount));
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
-        consoleWebPage.openConnectionsPageWebConsole();
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
+        addressSpaceConsoleWebPage.openConnectionsPageWebConsole();
 
         clientsList = attachClients(addresses);
 
-        List<ConnectionWebItem> connectionItems = consoleWebPage.getConnectionItems(6);
+        List<ConnectionWebItem> connectionItems = addressSpaceConsoleWebPage.getConnectionItems(6);
         String hostname = connectionItems.get(0).getName();
 
-        consoleWebPage.addConnectionsFilter(FilterType.HOSTNAME, hostname);
+        addressSpaceConsoleWebPage.addConnectionsFilter(FilterType.HOSTNAME, hostname);
         assertThat(String.format("Console failed, does not contain %d connections", 1),
-                consoleWebPage.getConnectionItems(1).size(), is(1));
+                addressSpaceConsoleWebPage.getConnectionItems(1).size(), is(1));
 
-        consoleWebPage.clearAllFilters();
+        addressSpaceConsoleWebPage.clearAllFilters();
         assertThat(String.format("Console failed, does not contain %d connections", 6),
-                consoleWebPage.getConnectionItems(6).size(), is(6));
+                addressSpaceConsoleWebPage.getConnectionItems(6).size(), is(6));
     }
 
     protected void doTestSortConnectionsByHostname() throws Exception {
         int addressCount = 2;
         ArrayList<Address> addresses = generateQueueTopicList(getSharedAddressSpace(), "via-web", IntStream.range(0, addressCount));
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
-        consoleWebPage.openConnectionsPageWebConsole();
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(addresses.toArray(new Address[0]));
+        addressSpaceConsoleWebPage.openConnectionsPageWebConsole();
 
         clientsList = attachClients(addresses);
 
-        consoleWebPage.sortItems(SortType.HOSTNAME, true);
+        addressSpaceConsoleWebPage.sortItems(SortType.HOSTNAME, true);
         assertSorted("Console failed, items are not sorted by hostname asc",
-                consoleWebPage.getConnectionItems(), Comparator.comparing(ConnectionWebItem::getName));
+                addressSpaceConsoleWebPage.getConnectionItems(), Comparator.comparing(ConnectionWebItem::getName));
 
-        consoleWebPage.sortItems(SortType.HOSTNAME, false);
+        addressSpaceConsoleWebPage.sortItems(SortType.HOSTNAME, false);
         assertSorted("Console failed, items are not sorted by hostname desc",
-                consoleWebPage.getConnectionItems(), true, Comparator.comparing(ConnectionWebItem::getName));
+                addressSpaceConsoleWebPage.getConnectionItems(), true, Comparator.comparing(ConnectionWebItem::getName));
     }
 
     protected void doTestFilterConnectionsByContainerId() throws Exception {
         int connectionCount = 5;
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openWebConsolePage();
         Address dest = new AddressBuilder()
                 .withNewMetadata()
                 .withNamespace(getSharedAddressSpace().getMetadata().getNamespace())
@@ -624,30 +623,30 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                 .withPlan(getDefaultPlan(AddressType.QUEUE))
                 .endSpec()
                 .build();
-        consoleWebPage.createAddressWebConsole(dest);
-        consoleWebPage.openConnectionsPageWebConsole();
+        addressSpaceConsoleWebPage.createAddressWebConsole(dest);
+        addressSpaceConsoleWebPage.openConnectionsPageWebConsole();
 
         clientsList = new ArrayList<>();
         clientsList.add(getClientUtils().attachConnector(getSharedAddressSpace(), dest, connectionCount, 1, 1, defaultCredentials, 360));
-        selenium.waitUntilPropertyPresent(60, connectionCount, () -> consoleWebPage.getConnectionItems().size());
+        selenium.waitUntilPropertyPresent(60, connectionCount, () -> addressSpaceConsoleWebPage.getConnectionItems().size());
 
-        String containerID = consoleWebPage.getConnectionItems(connectionCount).get(0).getContainerID();
+        String containerID = addressSpaceConsoleWebPage.getConnectionItems(connectionCount).get(0).getContainerID();
 
-        consoleWebPage.addConnectionsFilter(FilterType.CONTAINER, containerID);
+        addressSpaceConsoleWebPage.addConnectionsFilter(FilterType.CONTAINER, containerID);
         assertThat(String.format("Console failed, does not contain %d connections", 1),
-                consoleWebPage.getConnectionItems(1).size(), is(1));
+                addressSpaceConsoleWebPage.getConnectionItems(1).size(), is(1));
 
-        consoleWebPage.clearAllFilters();
+        addressSpaceConsoleWebPage.clearAllFilters();
         assertThat(String.format("Console failed, does not contain %d connections", connectionCount),
-                consoleWebPage.getConnectionItems(connectionCount).size(), is(connectionCount));
+                addressSpaceConsoleWebPage.getConnectionItems(connectionCount).size(), is(connectionCount));
     }
 
     protected void doTestSortConnectionsByContainerId() throws Exception {
         int connectionCount = 5;
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openWebConsolePage();
         Address dest = new AddressBuilder()
                 .withNewMetadata()
                 .withNamespace(getSharedAddressSpace().getMetadata().getNamespace())
@@ -659,28 +658,28 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                 .withPlan(getDefaultPlan(AddressType.QUEUE))
                 .endSpec()
                 .build();
-        consoleWebPage.createAddressWebConsole(dest);
-        consoleWebPage.openConnectionsPageWebConsole();
+        addressSpaceConsoleWebPage.createAddressWebConsole(dest);
+        addressSpaceConsoleWebPage.openConnectionsPageWebConsole();
 
         clientsList = new ArrayList<>();
         clientsList.add(getClientUtils().attachConnector(getSharedAddressSpace(), dest, connectionCount, 1, 1, defaultCredentials, 360));
 
-        selenium.waitUntilPropertyPresent(60, connectionCount, () -> consoleWebPage.getConnectionItems().size());
+        selenium.waitUntilPropertyPresent(60, connectionCount, () -> addressSpaceConsoleWebPage.getConnectionItems().size());
 
-        consoleWebPage.sortItems(SortType.CONTAINER_ID, true);
+        addressSpaceConsoleWebPage.sortItems(SortType.CONTAINER_ID, true);
         assertSorted("Console failed, items are not sorted by containerID asc",
-                consoleWebPage.getConnectionItems(), Comparator.comparing(ConnectionWebItem::getContainerID));
+                addressSpaceConsoleWebPage.getConnectionItems(), Comparator.comparing(ConnectionWebItem::getContainerID));
 
-        consoleWebPage.sortItems(SortType.CONTAINER_ID, false);
+        addressSpaceConsoleWebPage.sortItems(SortType.CONTAINER_ID, false);
         assertSorted("Console failed, items are not sorted by containerID desc",
-                consoleWebPage.getConnectionItems(), true, Comparator.comparing(ConnectionWebItem::getContainerID));
+                addressSpaceConsoleWebPage.getConnectionItems(), true, Comparator.comparing(ConnectionWebItem::getContainerID));
     }
 
     protected void doTestMessagesMetrics() throws Exception {
         int msgCount = 19;
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openWebConsolePage();
         Address dest = new AddressBuilder()
                 .withNewMetadata()
                 .withNamespace(getSharedAddressSpace().getMetadata().getNamespace())
@@ -692,24 +691,24 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                 .withPlan(getDefaultPlan(AddressType.QUEUE))
                 .endSpec()
                 .build();
-        consoleWebPage.createAddressWebConsole(dest);
-        consoleWebPage.openAddressesPageWebConsole();
+        addressSpaceConsoleWebPage.createAddressWebConsole(dest);
+        addressSpaceConsoleWebPage.openAddressesPageWebConsole();
 
         AmqpClient client = resourcesManager.getAmqpClientFactory().createQueueClient();
         List<String> msgBatch = TestUtils.generateMessages(msgCount);
 
         int sent = client.sendMessages(dest.getSpec().getAddress(), msgBatch).get(2, TimeUnit.MINUTES);
-        selenium.waitUntilPropertyPresent(60, msgCount, () -> consoleWebPage.getAddressItem(dest).getMessagesIn());
-        assertEquals(sent, consoleWebPage.getAddressItem(dest).getMessagesIn(),
+        selenium.waitUntilPropertyPresent(60, msgCount, () -> addressSpaceConsoleWebPage.getAddressItem(dest).getMessagesIn());
+        assertEquals(sent, addressSpaceConsoleWebPage.getAddressItem(dest).getMessagesIn(),
                 String.format("Console failed, does not contain %d messagesIN", sent));
 
-        selenium.waitUntilPropertyPresent(60, msgCount, () -> consoleWebPage.getAddressItem(dest).getMessagesStored());
-        assertEquals(msgCount, consoleWebPage.getAddressItem(dest).getMessagesStored(),
+        selenium.waitUntilPropertyPresent(60, msgCount, () -> addressSpaceConsoleWebPage.getAddressItem(dest).getMessagesStored());
+        assertEquals(msgCount, addressSpaceConsoleWebPage.getAddressItem(dest).getMessagesStored(),
                 String.format("Console failed, does not contain %d messagesStored", msgCount));
 
         int received = client.recvMessages(dest.getSpec().getAddress(), msgCount).get(1, TimeUnit.MINUTES).size();
-        selenium.waitUntilPropertyPresent(60, msgCount, () -> consoleWebPage.getAddressItem(dest).getMessagesOut());
-        assertEquals(received, consoleWebPage.getAddressItem(dest).getMessagesOut(),
+        selenium.waitUntilPropertyPresent(60, msgCount, () -> addressSpaceConsoleWebPage.getAddressItem(dest).getMessagesOut());
+        assertEquals(received, addressSpaceConsoleWebPage.getAddressItem(dest).getMessagesOut(),
                 String.format("Console failed, does not contain %d messagesOUT", received));
 
     }
@@ -717,9 +716,9 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
     protected void doTestClientsMetrics() throws Exception {
         int senderCount = 5;
         int receiverCount = 10;
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openWebConsolePage();
         Address dest = new AddressBuilder()
                 .withNewMetadata()
                 .withNamespace(getSharedAddressSpace().getMetadata().getNamespace())
@@ -731,19 +730,19 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                 .withPlan(getDefaultPlan(AddressType.QUEUE))
                 .endSpec()
                 .build();
-        consoleWebPage.createAddressWebConsole(dest);
-        consoleWebPage.openAddressesPageWebConsole();
+        addressSpaceConsoleWebPage.createAddressWebConsole(dest);
+        addressSpaceConsoleWebPage.openAddressesPageWebConsole();
 
         ExternalMessagingClient client = new ExternalMessagingClient()
                 .withClientEngine(new RheaClientConnector());
         try {
             client = getClientUtils().attachConnector(getSharedAddressSpace(), dest, 1, senderCount, receiverCount, defaultCredentials, 360);
-            selenium.waitUntilPropertyPresent(60, senderCount, () -> consoleWebPage.getAddressItem(dest).getSendersCount());
+            selenium.waitUntilPropertyPresent(60, senderCount, () -> addressSpaceConsoleWebPage.getAddressItem(dest).getSendersCount());
 
             assertAll(
-                    () -> assertEquals(10, consoleWebPage.getAddressItem(dest).getReceiversCount(),
+                    () -> assertEquals(10, addressSpaceConsoleWebPage.getAddressItem(dest).getReceiversCount(),
                             String.format("Console failed, does not contain %d receivers", 10)),
-                    () -> assertEquals(5, consoleWebPage.getAddressItem(dest).getSendersCount(),
+                    () -> assertEquals(5, addressSpaceConsoleWebPage.getAddressItem(dest).getSendersCount(),
                             String.format("Console failed, does not contain %d senders", 5)));
         } finally {
             client.stop();
@@ -751,18 +750,18 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
     }
 
     protected void doTestCanOpenConsolePage(UserCredentials credentials, boolean userAllowed) throws Exception {
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), credentials);
-        consoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openWebConsolePage();
         log.info("User {} successfully authenticated", credentials);
 
         if (userAllowed) {
-            consoleWebPage.openAddressesPageWebConsole();
+            addressSpaceConsoleWebPage.openAddressesPageWebConsole();
         } else {
-            consoleWebPage.assertDialogPresent("noRbacErrorDialog");
+            addressSpaceConsoleWebPage.assertDialogPresent("noRbacErrorDialog");
 
             try {
-                consoleWebPage.openAddressesPageWebConsole();
+                addressSpaceConsoleWebPage.openAddressesPageWebConsole();
                 fail("Exception not thrown");
             } catch (WebDriverException ex) {
                 // PASS
@@ -784,9 +783,9 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
             testString = String.join("", Collections.nCopies(24, "10charhere"));
         }
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openWebConsolePage();
 
         for (AddressType type : types) {
             if (type == AddressType.SUBSCRIPTION) {
@@ -802,7 +801,7 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                         .endSpec()
                         .build();
                 log.info("Creating topic for subscription");
-                consoleWebPage.createAddressWebConsole(dest_topic);
+                addressSpaceConsoleWebPage.createAddressWebConsole(dest_topic);
                 dest = new AddressBuilder()
                         .withNewMetadata()
                         .withNamespace(getSharedAddressSpace().getMetadata().getNamespace())
@@ -830,14 +829,14 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                         .build();
             }
 
-            consoleWebPage.createAddressWebConsole(dest);
-            assertWaitForValue(assert_value, () -> consoleWebPage.getResultsCount(), new TimeoutBudget(120, TimeUnit.SECONDS));
+            addressSpaceConsoleWebPage.createAddressWebConsole(dest);
+            assertWaitForValue(assert_value, () -> addressSpaceConsoleWebPage.getResultsCount(), new TimeoutBudget(120, TimeUnit.SECONDS));
 
             if (type.equals(AddressType.SUBSCRIPTION)) {
-                consoleWebPage.deleteAddressWebConsole(dest_topic);
+                addressSpaceConsoleWebPage.deleteAddressWebConsole(dest_topic);
             }
-            consoleWebPage.deleteAddressWebConsole(dest);
-            assertWaitForValue(0, () -> consoleWebPage.getResultsCount(), new TimeoutBudget(20, TimeUnit.SECONDS));
+            addressSpaceConsoleWebPage.deleteAddressWebConsole(dest);
+            assertWaitForValue(0, () -> addressSpaceConsoleWebPage.getResultsCount(), new TimeoutBudget(20, TimeUnit.SECONDS));
         }
     }
 
@@ -856,11 +855,11 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                 .endSpec()
                 .build();
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.openAddressesPageWebConsole();
-        consoleWebPage.clickOnCreateButton();
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openAddressesPageWebConsole();
+        addressSpaceConsoleWebPage.clickOnCreateButton();
 
         for (char special_char : "#*/.:".toCharArray()) {
             //fill with valid name first
@@ -875,16 +874,16 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
     }
 
     protected void doTestCreateAddressWithSymbolsAt61stCharIndex(Address... destinations) throws Exception {
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.openAddressesPageWebConsole();
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openAddressesPageWebConsole();
 
         for (Address dest : destinations) {
-            consoleWebPage.createAddressWebConsole(dest);
-            consoleWebPage.deleteAddressWebConsole(dest);
+            addressSpaceConsoleWebPage.createAddressWebConsole(dest);
+            addressSpaceConsoleWebPage.deleteAddressWebConsole(dest);
         }
-        assertWaitForValue(0, () -> consoleWebPage.getResultsCount(), new TimeoutBudget(20, TimeUnit.SECONDS));
+        assertWaitForValue(0, () -> addressSpaceConsoleWebPage.getResultsCount(), new TimeoutBudget(20, TimeUnit.SECONDS));
     }
 
     protected void doTestAddressWithValidPlanOnly() throws Exception {
@@ -912,33 +911,33 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
                 .endSpec()
                 .build();
 
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.openAddressesPageWebConsole();
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.openAddressesPageWebConsole();
 
         // create Queue with default Plan and move to confirmation page
-        selenium.clickOnItem(consoleWebPage.getCreateButton(), "clicking on create button");
+        selenium.clickOnItem(addressSpaceConsoleWebPage.getCreateButton(), "clicking on create button");
         final Supplier<WebElement> webElementSupplier = () -> selenium.getDriver().findElement(By.id("new-name"));
         selenium.fillInputItem(selenium.getWebElement(webElementSupplier), destQueue.getSpec().getAddress());
-        selenium.clickOnItem(consoleWebPage.getRadioButtonForAddressType(destQueue), "clicking on radio button");
-        consoleWebPage.next();
-        consoleWebPage.next();
+        selenium.clickOnItem(addressSpaceConsoleWebPage.getRadioButtonForAddressType(destQueue), "clicking on radio button");
+        addressSpaceConsoleWebPage.next();
+        addressSpaceConsoleWebPage.next();
 
         // go back to page 1 by clicking "number 1"
-        consoleWebPage.clickOnAddressModalPageByNumber(1);
+        addressSpaceConsoleWebPage.clickOnAddressModalPageByNumber(1);
 
         // change details to Topic
         selenium.fillInputItem(selenium.getWebElement(webElementSupplier), destTopic.getSpec().getAddress());
-        selenium.clickOnItem(consoleWebPage.getRadioButtonForAddressType(destTopic), "clicking on radio button");
+        selenium.clickOnItem(addressSpaceConsoleWebPage.getRadioButtonForAddressType(destTopic), "clicking on radio button");
 
         // skip straight back to page 3 and create address
-        consoleWebPage.clickOnAddressModalPageByNumber(3);
-        consoleWebPage.next();
+        addressSpaceConsoleWebPage.clickOnAddressModalPageByNumber(3);
+        addressSpaceConsoleWebPage.next();
 
         // assert new address is Topic
         assertEquals(AddressType.TOPIC.toString(),
-                selenium.waitUntilItemPresent(60, () -> consoleWebPage.getAddressItem(destTopic)).getType(),
+                selenium.waitUntilItemPresent(60, () -> addressSpaceConsoleWebPage.getAddressItem(destTopic)).getType(),
                 "Console failed, expected TOPIC type");
 
 
@@ -949,10 +948,10 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
 
     protected void doTestPurgeMessages(Address address) throws Exception {
         List<String> msgs = IntStream.range(0, 1000).mapToObj(i -> "msgs:" + i).collect(Collectors.toList());
-        consoleWebPage = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
+        addressSpaceConsoleWebPage = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(getSharedAddressSpace()),
                 getSharedAddressSpace(), clusterUser);
-        consoleWebPage.openWebConsolePage();
-        consoleWebPage.createAddressesWebConsole(address);
+        addressSpaceConsoleWebPage.openWebConsolePage();
+        addressSpaceConsoleWebPage.createAddressesWebConsole(address);
         AmqpClient client = getAmqpClientFactory().createQueueClient();
 
         Future<Integer> sendResult = client.sendMessages(address.getSpec().getAddress(), msgs);
@@ -961,8 +960,8 @@ public abstract class WebConsoleTest extends TestBase implements ITestBaseShared
         Future<List<Message>> recvResult = client.recvMessages(address.getSpec().getAddress(), msgs.size() / 2);
         assertThat("Wrong count of messages receiver", recvResult.get(1, TimeUnit.MINUTES).size(), is(msgs.size() / 2));
 
-        consoleWebPage.openAddressesPageWebConsole();
-        consoleWebPage.purgeAddress(address);
+        addressSpaceConsoleWebPage.openAddressesPageWebConsole();
+        addressSpaceConsoleWebPage.purgeAddress(address);
 
         Future<List<Message>> recvResult2 = client.recvMessages(address.getSpec().getAddress(), msgs.size() / 2);
         assertThrows(TimeoutException.class, () -> recvResult2.get(20, TimeUnit.SECONDS), "Purge does not work, address contains messages");

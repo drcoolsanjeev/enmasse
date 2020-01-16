@@ -31,7 +31,7 @@ import io.enmasse.systemtest.model.address.AddressType;
 import io.enmasse.systemtest.model.addressspace.AddressSpaceType;
 import io.enmasse.systemtest.selenium.SeleniumFirefox;
 import io.enmasse.systemtest.selenium.SeleniumProvider;
-import io.enmasse.systemtest.selenium.page.ConsoleWebPage;
+import io.enmasse.systemtest.selenium.page.AddressSpaceConsoleWebPage;
 import io.enmasse.systemtest.selenium.resources.AddressWebItem;
 import io.enmasse.systemtest.shared.standard.QueueTest;
 import io.enmasse.systemtest.shared.standard.TopicTest;
@@ -1185,7 +1185,7 @@ class PlansTestStandard extends TestBase implements ITestIsolatedStandard {
             }
         }
 
-        ConsoleWebPage page = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(addressSpace), addressSpace, clusterUser);
+        AddressSpaceConsoleWebPage page = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(addressSpace), addressSpace, clusterUser);
         page.openWebConsolePage();
         page.openAddressesPageWebConsole();
 

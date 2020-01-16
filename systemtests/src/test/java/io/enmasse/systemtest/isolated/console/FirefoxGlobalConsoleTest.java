@@ -17,7 +17,6 @@ import org.junit.jupiter.api.Test;
 import static io.enmasse.systemtest.TestTag.ACCEPTANCE;
 
 @SeleniumFirefox
-@Disabled("Ignore whilst 0.31 console rework is underway")
 class FirefoxGlobalConsoleTest extends GlobalConsoleTest implements ITestIsolatedStandard {
 
     @Test
@@ -49,23 +48,6 @@ class FirefoxGlobalConsoleTest extends GlobalConsoleTest implements ITestIsolate
                 .withNewSpec()
                 .withType(AddressSpaceType.STANDARD.toString())
                 .withPlan(AddressSpacePlans.STANDARD_SMALL)
-                .withNewAuthenticationService()
-                .withName("standard-authservice")
-                .endAuthenticationService()
-                .endSpec()
-                .build());
-    }
-
-    @Test
-    void testConnectToAddressSpaceConsole() throws Exception {
-        doTestConnectToAddressSpaceConsole(new AddressSpaceBuilder()
-                .withNewMetadata()
-                .withName("test-addr-space-console")
-                .withNamespace(kubernetes.getInfraNamespace())
-                .endMetadata()
-                .withNewSpec()
-                .withType(AddressSpaceType.BROKERED.toString())
-                .withPlan(AddressSpacePlans.BROKERED)
                 .withNewAuthenticationService()
                 .withName("standard-authservice")
                 .endAuthenticationService()

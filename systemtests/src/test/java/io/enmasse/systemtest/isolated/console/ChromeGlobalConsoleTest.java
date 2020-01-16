@@ -18,7 +18,6 @@ import static io.enmasse.systemtest.TestTag.NON_PR;
 
 @Tag(NON_PR)
 @SeleniumChrome
-@Disabled("Ignore whilst 0.31 console refactoring is underway")
 class ChromeGlobalConsoleTest extends GlobalConsoleTest implements ITestIsolatedStandard {
 
     @Test
@@ -49,23 +48,6 @@ class ChromeGlobalConsoleTest extends GlobalConsoleTest implements ITestIsolated
                 .withNewSpec()
                 .withType(AddressSpaceType.STANDARD.toString())
                 .withPlan(AddressSpacePlans.STANDARD_SMALL)
-                .withNewAuthenticationService()
-                .withName("standard-authservice")
-                .endAuthenticationService()
-                .endSpec()
-                .build());
-    }
-
-    @Test
-    void testConnectToAddressSpaceConsole() throws Exception {
-        doTestConnectToAddressSpaceConsole(new AddressSpaceBuilder()
-                .withNewMetadata()
-                .withName("test-addr-space-console")
-                .withNamespace(kubernetes.getInfraNamespace())
-                .endMetadata()
-                .withNewSpec()
-                .withType(AddressSpaceType.BROKERED.toString())
-                .withPlan(AddressSpacePlans.BROKERED)
                 .withNewAuthenticationService()
                 .withName("standard-authservice")
                 .endAuthenticationService()

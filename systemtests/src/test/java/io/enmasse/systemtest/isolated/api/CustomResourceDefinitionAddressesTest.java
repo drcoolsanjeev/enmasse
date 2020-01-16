@@ -19,7 +19,7 @@ import io.enmasse.systemtest.model.addressspace.AddressSpacePlans;
 import io.enmasse.systemtest.model.addressspace.AddressSpaceType;
 import io.enmasse.systemtest.selenium.SeleniumFirefox;
 import io.enmasse.systemtest.selenium.SeleniumProvider;
-import io.enmasse.systemtest.selenium.page.ConsoleWebPage;
+import io.enmasse.systemtest.selenium.page.AddressSpaceConsoleWebPage;
 import io.enmasse.systemtest.time.TimeoutBudget;
 import io.enmasse.systemtest.utils.AddressSpaceUtils;
 import io.enmasse.systemtest.utils.AddressUtils;
@@ -87,7 +87,7 @@ public class CustomResourceDefinitionAddressesTest extends TestBase implements I
                 .endSpec()
                 .build();
 
-        ConsoleWebPage consoleWeb = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(brokered), brokered, clusterUser);
+        AddressSpaceConsoleWebPage consoleWeb = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(brokered), brokered, clusterUser);
         consoleWeb.openWebConsolePage();
         consoleWeb.openAddressesPageWebConsole();
         consoleWeb.createAddressWebConsole(dest1, false);
@@ -173,7 +173,7 @@ public class CustomResourceDefinitionAddressesTest extends TestBase implements I
                 String.format("Get all addresses should contains '%s'; but contains only: %s",
                         dest2.getMetadata().getName(), output));
 
-        ConsoleWebPage consoleWeb = new ConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(brokered), brokered, clusterUser);
+        AddressSpaceConsoleWebPage consoleWeb = new AddressSpaceConsoleWebPage(selenium, AddressSpaceUtils.getConsoleRoute(brokered), brokered, clusterUser);
         consoleWeb.openWebConsolePage();
         consoleWeb.openAddressesPageWebConsole();
         consoleWeb.deleteAddressWebConsole(dest1);

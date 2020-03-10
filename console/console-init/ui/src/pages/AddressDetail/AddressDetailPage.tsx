@@ -27,8 +27,8 @@ import {
 } from "graphql-module/queries";
 import { IObjectMeta_v1_Input } from "pages/AddressSpaceDetail/AddressSpaceDetailPage";
 import { AddressLinksWithFilterAndPagination } from "./AddressLinksWithFilterAndPaginationPage";
-import { EditAddress } from "pages/EditAddressPage";
-import { IAddressSpacePlanResponse } from "pages/AddressSpaceDetail/AddressList/AddressesListWithFilterAndPaginationPage";
+import { EditAddress } from "modules/address/containers/EditAddressPage";
+import { IAddressSpacePlanResponse } from "modules/address/AddressListPage";
 import { POLL_INTERVAL, FetchPolicy } from "constants/constants";
 import { NoDataFound } from "components/common/NoDataFound";
 import { useMutationQuery } from "hooks";

@@ -38,7 +38,7 @@ export interface IAddressSpace {
   authenticationService: string;
 }
 
-interface IAddressListProps {
+export interface IAddressListProps {
   rows: IAddressSpace[];
   onSelectAddressSpace: (data: IAddressSpace, isSelected: boolean) => void;
   onSelectAllAddressSpace: (

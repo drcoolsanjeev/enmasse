@@ -15,8 +15,8 @@ import {
 } from "@patternfly/react-core";
 import { useDocumentTitle, useA11yRouteChange } from "use-patternfly";
 import { StyleSheet } from "@patternfly/react-styles";
-import { AddressListFilterPage } from "./AddressListFilterPage";
-import { AddressListPage, compareTwoAddress } from "./AddressListPage";
+import { AddressListFilterPage } from "./containers/AddressListToolbar";
+import { AddressListPage } from "./containers/AddressListContainer";
 import { Divider } from "@patternfly/react-core/dist/js/experimental";
 import { useQuery, useMutation } from "@apollo/react-hooks";
 import {
@@ -25,9 +25,10 @@ import {
   PURGE_ADDRESS
 } from "graphql-module/queries";
 import { ISortBy } from "@patternfly/react-table";
-import { IAddress } from "components/AddressSpace/Address/AddressList";
 import { DialoguePrompt } from "components/common/DialoguePrompt";
 import { useErrorContext, types } from "context-state-reducer";
+import { compareTwoAddress } from "./utils/util";
+import { IAddress } from "./components/AddressList";
 
 export const GridStylesForTableHeader = StyleSheet.create({
   filter_left_margin: {

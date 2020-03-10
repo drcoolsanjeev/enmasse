@@ -15,8 +15,8 @@ import {
   ISortBy
 } from "@patternfly/react-table";
 import { Link } from "react-router-dom";
-import { TypePlan } from "components/common/TypePlan";
-import { Messages } from "components/common/Messages";
+import { TypePlan } from "modules/address/components/TypePlan";
+import { Messages } from "modules/address/components/Messages";
 import useWindowDimensions from "components/common/WindowDimension";
 import {
   AddressStatus,
@@ -48,13 +48,13 @@ export interface IAddress {
 
 interface IAddressListProps {
   rowsData: IAddress[];
-  onEdit: (rowData: IAddress) => void;
-  onDelete: (rowData: IAddress) => void;
-  onPurge: (rowData: IAddress) => void;
+  onEdit: (address: IAddress) => void;
+  onDelete: (address: IAddress) => void;
+  onPurge: (address: IAddress) => void;
   sortBy?: ISortBy;
-  onSort?: (_event: any, index: number, direction: string) => void;
-  onSelectAddress: (rowData: IAddress, isSelected: boolean) => void;
-  onSelectAllAddress: (datas: IAddress[], isSelected: boolean) => void;
+  onSort?: (_event: any, index: any, direction: any) => void;
+  onSelectAddress: (address: IAddress, isSelected: boolean) => void;
+  onSelectAllAddress: (addresses: IAddress[], isSelected: boolean) => void;
 }
 
 export const AddressList: React.FunctionComponent<IAddressListProps> = ({

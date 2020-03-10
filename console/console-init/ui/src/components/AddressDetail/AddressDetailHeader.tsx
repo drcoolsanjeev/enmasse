@@ -18,7 +18,7 @@ import {
   PageSection
 } from "@patternfly/react-core";
 import { css, StyleSheet } from "@patternfly/react-styles";
-import { TypeBadge } from "components/common/TypePlan";
+import { TypeBadge } from "components/common/TypeBadge";
 
 export interface IAddressDetailHeaderProps {
   type: string;

@@ -13,18 +13,16 @@ import {
   EDIT_ADDRESS,
   PURGE_ADDRESS
 } from "graphql-module/queries";
-import {
-  IAddress,
-  AddressList
-} from "components/AddressSpace/Address/AddressList";
+import { AddressList, IAddress } from "modules/address/components/AddressList";
 import { getFilteredValue } from "components/common/ConnectionListFormatter";
 import { Modal, Button } from "@patternfly/react-core";
-import { EmptyAddress } from "components/AddressSpace/Address/EmptyAddress";
-import { EditAddress } from "pages/EditAddressPage";
+import { EmptyAddress } from "modules/address/components/EmptyAddress";
+import { EditAddress } from "modules/address/containers/EditAddressPage";
 import { DialoguePrompt } from "components/common/DialoguePrompt";
 import { ISortBy } from "@patternfly/react-table";
 import { FetchPolicy, POLL_INTERVAL } from "constants/constants";
 import { useMutationQuery } from "hooks";
+import { compareTwoAddress } from "../utils/util";
 
 export interface IAddressListPageProps {
   name?: string;
@@ -48,14 +46,6 @@ export interface IAddressListPageProps {
   onSelectAllAddress: (addresses: IAddress[], isSelected: boolean) => void;
 }
 
-export function compareTwoAddress(
-  name1: string,
-  name2: string,
-  namespace1: string,
-  namespace2: string
-) {
-  return name1 === name2 && namespace1 === namespace2;
-}
 export const AddressListPage: React.FunctionComponent<IAddressListPageProps> = ({
   name,
   namespace,

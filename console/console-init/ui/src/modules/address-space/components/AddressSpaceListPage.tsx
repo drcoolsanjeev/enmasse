@@ -22,10 +22,10 @@ import {
 import { IAddressSpacesResponse } from "types/ResponseTypes";
 import { EditAddressSpace } from "pages/EditAddressSpace";
 import { ISortBy } from "@patternfly/react-table";
-import { compareTwoAddress } from "pages/AddressSpaceDetail/AddressList/AddressListPage";
 import { FetchPolicy, POLL_INTERVAL } from "constants/constants";
 import { IObjectMeta_v1_Input } from "pages/AddressSpaceDetail/AddressSpaceDetailPage";
 import { useMutationQuery } from "hooks";
+import { compareTwoAddress } from "modules/address/utils/util";
 
 interface AddressSpaceListPageProps {
   page: number;

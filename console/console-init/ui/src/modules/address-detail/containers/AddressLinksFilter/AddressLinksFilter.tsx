@@ -1,4 +1,5 @@
 import React from "react";
+import { DataToolbarChip } from "@patternfly/react-core/dist/js/experimental";
 import { useApolloClient } from "@apollo/react-hooks";
 import { ISelectOption, getSelectOptionList } from "utils";
 import { FetchPolicy, TYPEAHEAD_REQUIRED_LENGTH } from "constants/constants";
@@ -188,24 +189,24 @@ const AddressLinksFilter: React.FunctionComponent<IAddressLinksFilterProps> = ({
   };
 
   const onDelete = (
-    category: string | DataToolbarChipGroup,
-    chip: string | DataToolbarChip
+    type: string | DataToolbarChip,
+    id: string | DataToolbarChip
   ) => {
-    switch (category) {
+    switch (type) {
       case "Name":
-        if (filterNames && chip) {
+        if (filterNames && id) {
           let index = filterNames
             .map(filter => filter.value)
-            .indexOf(chip.toString());
+            .indexOf(id.toString());
           if (index >= 0) filterNames.splice(index, 1);
           setFilterNames([...filterNames]);
         }
         break;
       case "Container":
-        if (filterContainers && chip) {
+        if (filterContainers && id) {
           let index = filterContainers
             .map(filter => filter.value)
-            .indexOf(chip.toString());
+            .indexOf(id.toString());
           if (index >= 0) filterContainers.splice(index, 1);
           setFilterContainers([...filterContainers]);
         }

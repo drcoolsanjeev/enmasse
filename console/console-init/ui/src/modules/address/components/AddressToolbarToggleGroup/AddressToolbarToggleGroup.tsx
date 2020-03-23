@@ -4,8 +4,7 @@ import {
   DataToolbarGroup,
   DataToolbarFilter,
   DataToolbarItem,
-  DataToolbarChip,
-  DataToolbarChipGroup
+  DataToolbarChip
 } from "@patternfly/react-core/dist/js/experimental";
 import { FilterIcon, SearchIcon } from "@patternfly/react-icons";
 import {
@@ -32,8 +31,8 @@ interface IAddressToolbarProps {
   filterValue?: string | null;
   filterNames: Array<{ value: string; isExact: boolean }>;
   onDelete: (
-    category: string | DataToolbarChipGroup,
-    chip: string | DataToolbarChip
+    type: string | DataToolbarChip,
+    id: string | DataToolbarChip
   ) => void;
   onClickSearchIcon: (event: any) => void;
   nameOptions?: Array<ISelectOption>;

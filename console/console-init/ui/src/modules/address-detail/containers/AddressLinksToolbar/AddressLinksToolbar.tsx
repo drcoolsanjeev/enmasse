@@ -13,7 +13,7 @@ import useWindowDimensions from "components/common/WindowDimension";
 import { SortForMobileView } from "components/common/SortForMobileView";
 import { AddressLinksFilter } from "../AddressLinksFilter";
 
-interface IAddressLinksToolbarProps {
+interface AddressLinksToolbar {
   filterValue: string;
   setFilterValue: (value: string) => void;
   filterNames: any[];
@@ -28,7 +28,7 @@ interface IAddressLinksToolbarProps {
   addressName: string;
   namespace: string;
 }
-const AddressLinksToolbar: React.FunctionComponent<IAddressLinksToolbarProps> = ({
+const AddressLinksToolbar: React.FunctionComponent<AddressLinksToolbar> = ({
   filterValue,
   setFilterValue,
   filterNames,

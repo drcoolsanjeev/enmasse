@@ -5,11 +5,6 @@
 
 import React, { useState } from "react";
 import {
-  DataToolbarContent,
-  DataToolbar,
-  DataToolbarItem
-} from "@patternfly/react-core/dist/js/experimental";
-import {
   AddressSpaceFilterContainer,
   AddressSpaceListKebab
 } from "modules/address-space";
@@ -17,6 +12,11 @@ import { ISortBy } from "@patternfly/react-table";
 import { SortForMobileView } from "components/common/SortForMobileView";
 import useWindowDimensions from "components/common/WindowDimension";
 import { useStoreContext, types, MODAL_TYPES } from "context-state-reducer";
+import {
+  DataToolbarItem,
+  DataToolbar,
+  DataToolbarContent
+} from "@patternfly/react-core";
 
 interface IAddressSpaceToolbarProps {
   filterNames: any[];
